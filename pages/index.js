@@ -4,11 +4,6 @@ import Box from '../src/components/Box';
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons';
 import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
 
-// const Title = styled.h1`
-//   font-size: 50px;
-//   color: ${({ theme }) => theme.colors.primary};
-// `;
-
 function ProfileSidebar(props) {
   console.log(props);
   return (
@@ -26,12 +21,34 @@ function ProfileSidebar(props) {
   )
 }
 
+function ProfileRelationsBox(props) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">{props.title} ({props.items.length})</h2>
+      <ul>
+        {props.items.slice(0, 6).map(
+            (item) => {
+              return (
+                <li key={item.login}>
+                  <a href={`/users/${item.login}`} key={item.login}>
+                    <img src={`https://github.com/${item.login}.png`} />
+                    <span>{item.login}</span>
+                  </a>
+                </li>
+              );
+            }
+        )}
+      </ul>
+    </ProfileRelationsBoxWrapper>
+  );
+}
+
 export default function Home() {
   const githubUser = 'devthiart';
   const [comunidades, setComunidades] = React.useState([{
     id: '145154145145154514',
     title: 'Eu odeio acordar cedo',
-    image: 'https://img10.orkut.br.com/community/52cc4290facd7fa700b897d8a1dc80aa.jpg'
+    image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
   }]);;
   const pessoasFavoritas = [
     'juunegreiros', 
@@ -43,6 +60,24 @@ export default function Home() {
     'marcobrunodev', 
     'felipefialho'
   ]
+
+  const [seguidores, setSeguidores] = React.useState([]);
+
+  React.useEffect(function() {
+    fetch('https://api.github.com/users/devthiart/followers')
+    .then(resp => {
+      if(resp.ok === true){
+        return resp.json();
+      }
+      throw new Error("Não foi possível acessar a API. Status: " + resp.status);
+    })
+    .then(resp => {
+      setSeguidores(resp);
+    })
+    .catch(error => {
+      console.log(error);
+    })
+  }, []);
 
   return (
     <>
@@ -71,6 +106,10 @@ export default function Home() {
                 image: dadosDoForm.get('image')
               }
 
+              if(comunidade.image == "") {
+                comunidade.image = 'https://via.placeholder.com/300';
+              }
+
               const comunidadesAtualizadas = [...comunidades, comunidade]
               setComunidades(comunidadesAtualizadas);
               console.log(comunidades);
@@ -97,15 +136,15 @@ export default function Home() {
           </Box>
         </div>
         <div className="profileRelationsArea" style={{ gridArea: 'profileRelationsArea' }}>
+          <ProfileRelationsBox title="Seguidores" items={seguidores} />
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">Comunidades ({comunidades.length})</h2>
             <ul>
-              {comunidades.map(
-                  (comunidade, index) => {
+              {comunidades.slice(0, 6).map(
+                  (comunidade) => {
                     return (
-                      <li hidden={index>=6} key={comunidade.id}>
+                      <li key={comunidade.id}>
                         <a href={`/users/${comunidade.title}`} key={comunidade.title}>
-                          {/* <img src={`https://github.com/${comunidade}.png`} /> */}
                           <img src={comunidade.image} />
                           <span>{comunidade.title}</span>
                         </a>
@@ -118,10 +157,10 @@ export default function Home() {
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">Pessoas da Comunidade ({pessoasFavoritas.length})</h2>
             <ul>
-              {pessoasFavoritas.map(
-                  (pessoa, index) => {
+              {pessoasFavoritas.slice(0, 6).map(
+                  (pessoa) => {
                     return (
-                      <li hidden={index>=6} key={pessoa}>
+                      <li key={pessoa}>
                         <a href={`/users/${pessoa}`} key={pessoa}>
                           <img src={`https://github.com/${pessoa}.png`} />
                           <span>{pessoa}</span>
