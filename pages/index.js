@@ -5,7 +5,6 @@ import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet 
 import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
 
 function ProfileSidebar(props) {
-  console.log(props);
   return (
     <Box as='aside'>
       <img src={ `https://www.github.com/${props.githubUser}.png` } style={{ borderRadius: '8px' }}/>
@@ -45,11 +44,7 @@ function ProfileRelationsBox(props) {
 
 export default function Home() {
   const githubUser = 'devthiart';
-  const [comunidades, setComunidades] = React.useState([{
-    id: '145154145145154514',
-    title: 'Eu odeio acordar cedo',
-    image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-  }]);;
+  const [comunidades, setComunidades] = React.useState([]);
   const pessoasFavoritas = [
     'juunegreiros', 
     'omariosouto', 
@@ -59,8 +54,7 @@ export default function Home() {
     'rafaballerini', 
     'marcobrunodev', 
     'felipefialho'
-  ]
-
+  ];
   const [seguidores, setSeguidores] = React.useState([]);
 
   React.useEffect(function() {
@@ -76,7 +70,31 @@ export default function Home() {
     })
     .catch(error => {
       console.log(error);
+    });
+
+    // Utilizando API GraphQL
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `d1fc6113ab963ea2079e98bfab2cd1`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        'query': `query {
+          allCommunities {
+            id
+            title
+            imageUrl
+            creatorSlug
+          }
+        }` 
+      }),
     })
+    .then(response => response.json())
+    .then(completeResponse => {
+      setComunidades(completeResponse.data.allCommunities);
+    });
   }, []);
 
   return (
@@ -94,25 +112,40 @@ export default function Home() {
           <Box>
             <h2>O que você deseja fazer?</h2>
             <form onSubmit={function handleCriaComunidade(e) {
+              
               e.preventDefault();
               const dadosDoForm = new FormData(e.target);
 
-              console.log('Campo: ', dadosDoForm.get('title'));
-              console.log('Campo: ', dadosDoForm.get('image'));
+              console.log('title: ', dadosDoForm.get('title'));
+              console.log('image: ', dadosDoForm.get('image'));
 
               const comunidade = {
-                id: new Date().toISOString(),
                 title: dadosDoForm.get('title'),
-                image: dadosDoForm.get('image')
+                imageUrl: dadosDoForm.get('image'),
+                creatorSlug: githubUser, 
               }
 
-              if(comunidade.image == "") {
-                comunidade.image = 'https://via.placeholder.com/300';
-              }
+              //Executa o código do nosso BFF que está em './api/comunidades.js'
+              fetch('/api/comunidades', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(comunidade)
+              })
+              .then(async (response) => {
+                const dados = await response.json();
+                
+                console.log(dados.registroCriado);
 
-              const comunidadesAtualizadas = [...comunidades, comunidade]
-              setComunidades(comunidadesAtualizadas);
-              console.log(comunidades);
+                const comunidade = dados.registroCriado;
+                const comunidadesAtualizadas = [...comunidades, comunidade];
+                setComunidades(comunidadesAtualizadas);
+              });
+
+              if(comunidade.imageUrl == "") {
+                comunidade.imageUrl = 'https://placehold.it/300x300';
+              }
             }}>
               <div>
                 <input 
@@ -141,12 +174,12 @@ export default function Home() {
             <h2 className="smallTitle">Comunidades ({comunidades.length})</h2>
             <ul>
               {comunidades.slice(0, 6).map(
-                  (comunidade) => {
+                  (itemAtual) => {
                     return (
-                      <li key={comunidade.id}>
-                        <a href={`/users/${comunidade.title}`} key={comunidade.title}>
-                          <img src={comunidade.image} />
-                          <span>{comunidade.title}</span>
+                      <li key={itemAtual.id}>
+                        <a href={`/communities/${itemAtual.id}`} key={itemAtual.title}>
+                          <img src={itemAtual.imageUrl} />
+                          <span>{itemAtual.title}</span>
                         </a>
                       </li>
                     );
