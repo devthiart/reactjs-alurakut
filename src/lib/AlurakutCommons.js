@@ -1,6 +1,8 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 import NextLink from 'next/link';
+import nookies from 'nookies';
+import router  from 'next/router';
 
 const BASE_URL = 'https://alurakut.vercel.app/';
 const v = '1';
@@ -35,7 +37,13 @@ export function AlurakutMenu({ githubUser }) {
         </nav>
 
         <nav>
-          <a href={`/logout`}>
+          <a href={`/`} onClick={
+            e => {
+              e.preventDefault();
+              nookies.destroy(null, 'USER_TOKEN');
+              router.push('/login');
+            }
+          }>
             Sair
           </a>
           <div>
@@ -211,7 +219,13 @@ export function AlurakutProfileSidebarMenuDefault() {
           <img src={`${BASE_URL}/icons/plus.svg`} />
             GitHub Trends
           </a>
-        <a href="/logout">
+        <a href="/" onClick={
+          e => {
+            e.preventDefault();
+            nookies.destroy(null, 'USER_TOKEN');
+            router.push('/login');
+          }
+        }>
           <img src={`${BASE_URL}//icons/logout.svg`} />
             Sair
           </a>
